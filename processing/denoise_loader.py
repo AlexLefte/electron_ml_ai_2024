@@ -38,11 +38,11 @@ def get_dn_data_loaders(cfg):
     val_noisy_images = [os.path.join(val_noisy_path, s) for s in os.listdir(val_noisy_path)
                         if s.endswith('.jpg') or s.endswith('.jpeg')]
 
-    train_images = train_images[:20]
-    train_noisy_images = train_noisy_images[:20]
-
-    val_images = val_images[:10]
-    val_noisy_images = val_noisy_images[:10]
+    # train_images = train_images[:20]
+    # train_noisy_images = train_noisy_images[:20]
+    #
+    # val_images = val_images[:10]
+    # val_noisy_images = val_noisy_images[:10]
 
     patch_size = cfg['dn_patch_size']
     patch_stride = cfg['dn_patch_stride']
