@@ -10,6 +10,7 @@ from utils.metrics import *
 from time import time
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
+from processing.data_processing import extract_test_patches
 
 
 def train_step(train_loader,
@@ -265,3 +266,21 @@ if __name__ == "__main__":
     end_time = time()
     print(f"==== Stopped training. Total training time: {end_time - start_time:.3f} seconds ===="
                 f"\n===========================================")
+
+
+def test_psnr(orig_path,
+              noisy_path):
+    orig_images_path = [os.path.join(orig_path, s) for s in os.listdir(orig_path)
+                        if s.endswith('.jpg') or s.endswith('.jpeg')]
+    noisy_images_path = [os.path.join(noisy_path, s) for s in os.listdir(noisy_path)
+                         if s.endswith('.jpg') or s.endswith('.jpeg')]
+
+    for orig_image_path, noisy_image_path in zip(orig_images_path, noisy_images_path):
+        test_orig_image, test_noisy_image, initial_shape = extract_test_patches(orig_image_path,
+                                                                                noisy_image_path)
+
+        for orig_patch, noisy_patch in zip(test_orig_image, test_noisy_image):
+
+
+
+

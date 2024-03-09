@@ -9,7 +9,7 @@
   "dn_val_size": 0.2,
   "dn_batch_size": 50,
   "dn_patch_size": 40,
-  "dn_patch_stride": 40,
+  "dn_patch_stride": 80,
   "dn_lr": 0.002,
   "dn_lr_step": 5,
   "dn_loss_function": "MSE",
