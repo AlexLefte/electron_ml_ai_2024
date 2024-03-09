@@ -1,0 +1,22 @@
+{
+  "base_path": "C:/Users/Engineer/Documents/Updates/Repo/electron_ml_ai_2024/",
+  "train_path": "dataset/train/",
+  "train_noisy_path": "dataset/train_noisy/",
+  "val_path": "dataset/val/",
+  "val_noisy_path": "dataset/val_noisy/",
+
+  "dn_train_size": 0.8,
+  "dn_val_size": 0.2,
+  "dn_batch_size": 50,
+  "dn_patch_size": 40,
+  "dn_patch_stride": 40,
+  "dn_lr": 0.002,
+  "dn_lr_step": 5,
+  "dn_loss_function": "MSE",
+  "dn_optimizer": "ADAM",
+  "dn_epochs": 30,
+  "dn_in_channels": 3,
+  "filters": 64,
+  "conv_kernel": 3,
+  "conv_stride": 1
+}
