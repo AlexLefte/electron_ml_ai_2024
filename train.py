@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from model.DnCNN import DnCNN
 import os
@@ -11,6 +13,8 @@ from time import time
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from processing.data_processing import extract_test_patches
+from skimage import io
+import matplotlib.pyplot as plt
 
 
 def train_step(train_loader,
@@ -170,8 +174,100 @@ def save_checkpoint(path: str,
 
     torch.save(checkpoint, path)
 
+def test_psnr(orig_path,
+              noisy_path,
+              model_state_path:None):
+    orig_images_path = [os.path.join(orig_path, s) for s in os.listdir(orig_path)
+                        if s.endswith('.jpg') or s.endswith('.jpeg')]
+    noisy_images_path = [os.path.join(noisy_path, s) for s in os.listdir(noisy_path)
+                         if s.endswith('.jpg') or s.endswith('.jpeg')]
+
+    orig_images_path = [orig_images_path[0]]
+    noisy_images_path = [noisy_images_path[0]]
+
+    # Initialize and load the model
+    test_model = DnCNN()
+    # Assuming `model_state_path` is the path to your saved model state
+    checkpoint = torch.load(model_state_path)
+
+    # Correctly extracting the model's state_dict
+    test_model.load_state_dict(checkpoint['model_state'])
+
+    # Setup the device
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    test_model.to(device)
+
+    test_model.eval()
+    with torch.inference_mode():
+        for orig_image_path, noisy_image_path in zip(orig_images_path, noisy_images_path):
+            test_orig_image, test_noisy_image, initial_shape = extract_test_patches(orig_image_path,
+                                                                                    noisy_image_path)
+
+            pred_patches = []
+
+            for orig_patch, noisy_patch in zip(test_orig_image, test_noisy_image):
+                noisy_tensor = torch.from_numpy(noisy_patch).float() / 255.0 # Assuming noisy_patch is a NumPy array
+
+                # Add a batch dimension if necessary (assuming the model expects [batch, channels, height, width])
+                noisy_tensor = noisy_tensor.permute(2, 0, 1)
+                noisy_tensor = noisy_tensor.unsqueeze(0)
+
+                # Ensure the tensor is on the correct device (CPU or GPU)
+                noisy_tensor = noisy_tensor.to(device)  # Assuming your model has a 'device' attribute
+
+                # Perform the prediction
+                pred = test_model(noisy_tensor)
+                pred_patches.append(pred.permute(0, 2, 3, 1))
+
+            pred_patches_np = [p.squeeze(0).cpu().numpy() for p in pred_patches]  # Assuming pred is a tensor
+
+            patch_size = 40
+            h, w, c = initial_shape
+            num_patches_h = int(np.ceil(h / patch_size))
+            num_patches_w = int(np.ceil(w / patch_size))
+
+            # Initialize canvas
+            predicted_image = np.zeros((num_patches_h * patch_size, num_patches_w * patch_size, 3),
+                                       dtype=np.float32)
+
+            for idx, patch in enumerate(pred_patches_np):
+                row_idx = idx // num_patches_w
+                col_idx = idx % num_patches_w
+                start_row = row_idx * patch_size
+                start_col = col_idx * patch_size
+                predicted_image[start_row:start_row + patch_size, start_col:start_col + patch_size, :] = patch
+
+            orig_image = io.imread(orig_image_path).astype(np.float32) / 255.0
+            predicted_image = predicted_image[:initial_shape[0], :initial_shape[1]]
+            # Find the min and max of the image
+            min_val = predicted_image.min()
+            max_val = predicted_image.max()
+
+            # Normalize the image to [0, 1]
+            predicted_image = (predicted_image - min_val) / (max_val - min_val)
+
+            predicted_image = (predicted_image * 255).astype(np.uint8)
+
+            # difference_image = orig_image - predicted_image
+            # difference_image_clipped = np.clip(difference_image, 0, 1)
+            # difference_image_uint8 = (difference_image_clipped * 255).astype(np.uint8)
+            io.imsave('C:\\Users\\Engineer\\Documents\\Updates\\Repo\\electron_ml_ai_2024\\image.jpg',
+                      predicted_image)
+            ok = 'ok'
+
+
+
 
 if __name__ == "__main__":
+    # Test on image
+    image_for_test = 'C:\\Users\\Engineer\\Documents\\Updates\\Repo\\electron_ml_ai_2024\\dataset\\train\\'
+    image_noise_for_test = 'C:\\Users\\Engineer\\Documents\\Updates\\Repo\\electron_ml_ai_2024\\dataset\\train_noisy\\'
+    # Model state path:
+    model_state_path = 'C:\\Users\\Engineer\\Documents\\Updates\\Repo\\electron_ml_ai_2024\\experiments\\checkpoints\\03-09-24_19-24\\best.pkl'
+    test_psnr(image_for_test,
+         image_noise_for_test,
+         model_state_path)
+
     # Get the current directory of the script
     current_dir = os.path.dirname(__file__)
 
@@ -268,18 +364,11 @@ if __name__ == "__main__":
                 f"\n===========================================")
 
 
-def test_psnr(orig_path,
-              noisy_path):
-    orig_images_path = [os.path.join(orig_path, s) for s in os.listdir(orig_path)
-                        if s.endswith('.jpg') or s.endswith('.jpeg')]
-    noisy_images_path = [os.path.join(noisy_path, s) for s in os.listdir(noisy_path)
-                         if s.endswith('.jpg') or s.endswith('.jpeg')]
 
-    for orig_image_path, noisy_image_path in zip(orig_images_path, noisy_images_path):
-        test_orig_image, test_noisy_image, initial_shape = extract_test_patches(orig_image_path,
-                                                                                noisy_image_path)
 
-        for orig_patch, noisy_patch in zip(test_orig_image, test_noisy_image):
+
+
+
 
 
 
